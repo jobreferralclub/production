@@ -1,0 +1,6 @@
+<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green speech bubble -->
+  <circle cx="150" cy="75" r="60" fill="#79e708"/>
+  <!-- Small tail for speech bubble -->
+  <path d="M 100 110 L 120 125 L 115 100 Z" fill="#79e708"/>
+</svg>
