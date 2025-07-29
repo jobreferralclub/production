@@ -25,6 +25,8 @@ const ResumeEnhancer = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const navigate = useNavigate();
 
+    const apiUrl = import.meta.env.VITE_API_URL;
+
     const resumeTips = [
         "Tailor your resume for each job application.",
         "Use action verbs like 'Led', 'Built', 'Achieved'.",
@@ -98,7 +100,7 @@ const ResumeEnhancer = () => {
                 return;
             }
 
-            const response = await fetch("http://localhost:5000/generate-pdf", {
+            const response = await fetch(`${apiUrl}/generate-pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ html }),
@@ -135,7 +137,7 @@ const ResumeEnhancer = () => {
         setStep("uploading");
 
         try {
-            const res = await axios.post("http://localhost:5000/extract-text", formData, {
+            const res = await axios.post(`${apiUrl}/extract-text`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             setResumeText(res.data.text);
@@ -151,7 +153,7 @@ const ResumeEnhancer = () => {
         setStep("enhancing");
 
         try {
-            const res = await axios.post("http://localhost:5000/enhance-resume", {
+            const res = await axios.post(`${apiUrl}/enhance-resume`, {
                 resumeText,
             });
 

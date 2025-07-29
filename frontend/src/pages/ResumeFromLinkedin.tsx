@@ -24,6 +24,8 @@ const ResumeFromLinkedin = () => {
     const lottieContainerRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate();
 
+    const apiUrl = import.meta.env.VITE_API_URL;
+
     const resumeTips = [
         "Tailor your resume for each job application.",
         "Use action verbs like 'Led', 'Built', 'Achieved'.",
@@ -100,14 +102,14 @@ const ResumeFromLinkedin = () => {
         setLoading(true);
 
         try {
-            const extractRes = await axios.post("http://localhost:5000/extract-text", formData, {
+            const extractRes = await axios.post(`${apiUrl}/extract-text`, formData, {
                 headers: { "Content-Type": "multipart/enhance-resume" },
             });
 
             const extractedText = extractRes.data.text;
             setStep("formatting");
 
-            const formatRes = await axios.post("http://localhost:5000/format-pdf", {
+            const formatRes = await axios.post(`${apiUrl}/format-pdf`, {
                 resumeText: extractedText,
             });
 
