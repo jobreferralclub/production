@@ -76,7 +76,7 @@ const Navigation = () => {
               </div>
               {/* Dropdown Menu - absolutely positioned, no gap */}
               {servicesOpen && (
-                <div className="absolute left-0 top-full mt-2 bg-black rounded-lg border border-gray-800 w-52 shadow-lg z-50">
+                <div className="absolute left-0 top-full bg-black rounded-lg border border-gray-800 w-52 shadow-lg z-50">
                   <a
                     href="./ai-resume-builder"
                     className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
