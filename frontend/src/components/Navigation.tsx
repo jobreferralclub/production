@@ -84,6 +84,18 @@ const Navigation = () => {
                     Resume Builder
                   </a>
                   <a
+                    href="./resume-ranker"
+                    className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
+                  >
+                    Resume Ranker
+                  </a>
+                  <a
+                    href="./resume-analyzer"
+                    className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
+                  >
+                    Resume Analyzer
+                  </a>
+                  <a
                     href="#practice"
                     className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
                   >
