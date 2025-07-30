@@ -6,6 +6,9 @@ const ResumeAnalyzer: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [analysisResult, setAnalysisResult] = useState<any>(null);
 
+    const apiUrl = import.meta.env.VITE_FLASK_API_URL;
+    console.log(apiUrl);
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -36,7 +39,7 @@ const ResumeAnalyzer: React.FC = () => {
         formData.append('resume', selectedFile);
 
         try {
-            const response = await fetch('http://localhost:3001/analyze', {
+            const response = await fetch(`${apiUrl}/analyze`, {
                 method: 'POST',
                 body: formData,
             });
@@ -402,24 +405,24 @@ const ResumeAnalyzer: React.FC = () => {
                         </div>
 
                         {/* AI Suggestions */}
-                        {analysisResult.suggestions && (
-                            <div className="bg-gradient-to-br from-gray-800/30 to-black/30 border border-[#79e708]/20 rounded-3xl p-8">
-                                <h3 className="flex items-center text-[#79e708] text-2xl font-black mb-6">
-                                    <span className="mr-3">💡</span>
-                                    AI-Powered Recommendations
-                                </h3>
-                                <div className="grid gap-4">
-                                    {analysisResult.suggestions.map((suggestion: string, index: number) => (
-                                        <div key={index} className="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-gray-700/50 hover:border-[#79e708]/30 transition-all duration-300">
-                                            <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#79e708] to-[#5bb406] rounded-full text-black font-black text-sm flex-shrink-0">
-                                                {index + 1}
-                                            </div>
-                                            <span className="text-gray-300 leading-relaxed">{suggestion}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        {Array.isArray(analysisResult?.suggestions) ? (
+                            <ul>
+                                {analysisResult?.suggestions && typeof analysisResult.suggestions === 'object' && !Array.isArray(analysisResult.suggestions) ? (
+                                    <ul className="space-y-2 text-left text-gray-300 list-disc list-inside">
+                                        {Object.entries(analysisResult.suggestions as Record<string, string>).map(([key, value]) => (
+                                            <li key={key}>
+                                                <strong className="text-[#79e708] capitalize">{key.replace(/_/g, ' ')}:</strong> {value}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-gray-300">{analysisResult?.suggestions}</p>
+                                )}
+                            </ul>
+                        ) : (
+                            <p>{analysisResult?.suggestions}</p>
                         )}
+
                     </div>
                 )}
             </div>

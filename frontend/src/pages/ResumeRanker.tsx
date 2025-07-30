@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const API_URL = "http://127.0.0.1:3000/rank";
+const API_URL = import.meta.env.VITE_FLASK_API_URL + "/rank";
 
 type LLMResult = {
     candidate_name: string;
