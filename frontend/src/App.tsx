@@ -10,8 +10,9 @@ import ResumeBuilderQuestionnaire from "./pages/ResumeBuilderQuestionnaire";
 import ResumeBuilderPreview from "./pages/ResumeBuilderPreview";
 import ResumeEnhancer from "./pages/ResumeEnhancer";
 import ResumeFromLinkedin from "./pages/ResumeFromLinkedin";
-import ResumeAnalyzer from "./pages/ResumeAnalyser";
+import ResumeAnalyzer from "./pages/ResumeAnalyszer";
 import ResumeRanker from "./pages/ResumeRanker";
+import AnalyzerResult from "./pages/AnalyzerResult";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/resume-analyzer" element={<ResumeAnalyzer/>} />
+               <Route path="/analyzer-result" element={<AnalyzerResult />} /> 
               <Route path="/resume-ranker" element={<ResumeRanker/>} />
               <Route path="/ai-resume-builder">
                 <Route index element={<ResumeBuilder/>} />
