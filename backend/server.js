@@ -4,48 +4,65 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
-const fs = require("fs");
+const fs = require("fs-extra");
+const path = require("path");
 const fetch = require("node-fetch");
-require("dotenv").config();
 const puppeteer = require("puppeteer");
 const { jsonrepair } = require("jsonrepair");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+require("dotenv").config();
+
+// Custom LLM modules
+const { analyzeResumeWithLLM } = require("./resumeAnalyzer");
+const { extractText } = require("./resumeParser");
+const { extractTextAndEmail } = require("./utils/parser");
+const { scoreResumeWithLLM } = require("./utils/scoring");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Middleware setup
+app.use(cors({ origin: "*" }));
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 
-const upload = multer({ dest: "uploads/" });
+const UPLOAD_FOLDER = "uploads";
+fs.ensureDirSync(UPLOAD_FOLDER);
+
+// File storage setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_FOLDER),
+  filename: (req, file, cb) => cb(null, file.originalname),
+});
+const upload = multer({ storage });
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-// Resume Text Extraction Endpoint
+// Filetype validator
+const ALLOWED_EXTENSIONS = [".pdf", ".docx"];
+function allowedFile(filename) {
+  return ALLOWED_EXTENSIONS.includes(path.extname(filename).toLowerCase());
+}
+
+// ✅ Extract Text from Resume
 app.post("/extract-text", upload.single("resume"), async (req, res) => {
   const file = req.file;
-
   if (!file) return res.status(400).json({ error: "No file uploaded." });
 
   try {
     let text = "";
 
     if (file.mimetype === "application/pdf") {
-      const dataBuffer = fs.readFileSync(file.path);
-      const data = await pdfParse(dataBuffer);
+      const data = await pdfParse(fs.readFileSync(file.path));
       text = data.text;
-    } else if (
-      file.mimetype ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ) {
-      const buffer = fs.readFileSync(file.path);
-      const result = await mammoth.extractRawText({ buffer });
+    } else if (file.mimetype.includes("officedocument.wordprocessingml.document")) {
+      const result = await mammoth.extractRawText({ buffer: fs.readFileSync(file.path) });
       text = result.value;
     } else {
       return res.status(400).json({ error: "Unsupported file type." });
     }
 
-    fs.unlinkSync(file.path); // Clean up temp file
+    fs.unlinkSync(file.path);
     res.json({ text });
   } catch (err) {
     console.error(err);
@@ -53,46 +70,19 @@ app.post("/extract-text", upload.single("resume"), async (req, res) => {
   }
 });
 
-// Joke Generator via Straico API
-app.get("/give-joke", async (req, res) => {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const result = await model.generateContent("Tell me a random funny joke.");
-    const response = await result.response;
-    const joke = response.text().trim();
-
-    if (!joke) {
-      return res.status(500).json({ error: "No joke generated." });
-    }
-
-    return res.json({ joke });
-  } catch (error) {
-    console.error("Gemini error:", error);
-    res.status(500).json({ error: "Failed to generate joke." });
-  }
-});
-
-// Replace the previous joke endpoint with this
+// ✅ Enhance Resume with LLM
 app.post("/enhance-resume", async (req, res) => {
   const { resumeText } = req.body;
-
-  if (!resumeText || typeof resumeText !== "string") {
+  if (!resumeText || typeof resumeText !== "string")
     return res.status(400).json({ error: "Invalid or missing resumeText." });
-  }
 
-  if (resumeText.length > 15000) {
-    return res.status(400).json({
-      error: "Your resume is too long. Please shorten it to under 15,000 characters.",
-    });
-  }
+  if (resumeText.length > 15000)
+    return res.status(400).json({ error: "Resume too long. Limit to 15,000 characters." });
 
   const trimmedResume = resumeText.slice(0, 3000);
-
   const prompt = `
 You are an AI resume enhancement expert.
-
-Enhance the following resume content by improving grammar, clarity, and impact, without changing the meaning. 
+Enhance the following resume content by improving grammar, clarity, and impact, without changing the meaning.
 Do NOT invent or add fictional information.
 
 Only return valid, enhanced JSON matching this exact structure:
@@ -106,263 +96,89 @@ Only return valid, enhanced JSON matching this exact structure:
     "website": "string",
     "summary": "string"
   },
-  "experience": [
-    {
-      "id": 1,
-      "company": "string",
-      "position": "string",
-      "startDate": "string(YYYY-MM-DD)",
-      "endDate": "string(YYYY-MM-DD)",
-      "description": "string",
-      "current": false
-    }
-  ],
-  "education": [
-    {
-      "id": 1,
-      "school": "string",
-      "degree": "string",
-      "field": "string",
-      "startDate": "string(YYYY-MM-DD)",
-      "endDate": "string(YYYY-MM-DD)",
-      "gpa": "string"
-    }
-  ],
-  "skills": [
-    {
-      "id": 1,
-      "name": "string",
-      "level": "string(Beginner/Intermediate/Advanced/Expert)"
-    }
-  ],
-  "projects": [
-    {
-      "id": 1,
-      "name": "string",
-      "description": "string",
-      "technologies": "string",
-      "url": "string"
-    }
-  ]
+  "experience": [...],
+  "education": [...],
+  "skills": [...],
+  "projects": [...]
 }
 
-⚠️ Do not include any commentary, explanations, or markdown (like triple backticks). Only respond with clean, parsable JSON.
-
-Here's the resume text to enhance:
-
-${trimmedResume}
-`;
+⚠️ Do not include commentary or markdown. Only return clean JSON.
+Here is the resume text:
+${trimmedResume}`;
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
     const result = await model.generateContent(prompt);
-    const content = (await result.response).text().trim();
+    const content = (await result.response).text().trim().replace(/```json|```/g, "");
 
-    const cleaned = content.replace(/```json|```/g, "").trim();
+    const repairedJson = jsonrepair(content);
+    const parsed = JSON.parse(repairedJson);
 
-    try {
-      const repairedJson = jsonrepair(cleaned);
-      const parsed = JSON.parse(repairedJson);
-      return res.json(parsed);
-    } catch (repairErr) {
-      console.error("JSON repair failed:", repairErr);
-      return res.status(500).json({
-        error: "AI returned malformed JSON that couldn't be fixed.",
-        raw: content,
-      });
-    }
+    return res.json(parsed);
   } catch (err) {
     console.error("Gemini API error:", err);
     res.status(500).json({ error: "Failed to enhance resume using Gemini." });
   }
 });
 
-app.post("/fetch-linkedin", async (req, res) => {
-  const { url } = req.body;
-
-  if (!url || typeof url !== "string" || !url.includes("linkedin.com/in/")) {
-    return res.status(400).json({ error: "Please provide a valid LinkedIn profile URL." });
-  }
-
-  try {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
-
-    const page = await browser.newPage();
-
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-    );
-
-    await page.setExtraHTTPHeaders({
-      "Accept-Language": "en-US,en;q=0.9"
-    });
-
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 60000
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for dynamic content
-
-    const profileData = await page.evaluate(() => {
-      const getText = (selector) => {
-        const el = document.querySelector(selector);
-        return el ? el.textContent.trim() : null;
-      };
-
-      // These selectors are based on the current public profile structure
-      const name = getText("h1.text-heading-xlarge") || getText("h1");
-      const headline = getText("div.text-body-medium.break-words") || getText("div.text-body-medium");
-      const location = getText("span.text-body-small.inline.t-black--light.break-words") || getText("span.text-body-small");
-      const about = getText("#about ~ div p") || getText("#about ~ div span");
-
-      return { name, headline, location, about };
-    });
-
-    await browser.close();
-
-    res.json({
-      message: "Public profile data fetched successfully.",
-      profileData
-    });
-  } catch (error) {
-    console.error("Error fetching LinkedIn page:", error.message);
-    res.status(500).json({ error: "Failed to fetch LinkedIn page." });
-  }
-});
-
+// ✅ Format resume into structured JSON
 app.post("/format-pdf", async (req, res) => {
   const { resumeText } = req.body;
 
-  if (!resumeText || typeof resumeText !== "string") {
+  if (!resumeText || typeof resumeText !== "string")
     return res.status(400).json({ error: "Invalid or missing resumeText." });
-  }
 
-  if (resumeText.length > 15000) {
-    return res.status(400).json({
-      error: "The resume is too long. Please reduce it under 15,000 characters.",
-    });
-  }
+  if (resumeText.length > 15000)
+    return res.status(400).json({ error: "Resume too long. Limit to 15,000 characters." });
 
-  const trimmedResume = resumeText.slice(0, 3000); // truncate for stability
+  const trimmedResume = resumeText.slice(0, 3000);
 
   const prompt = `
 You are a resume parsing expert.
-
-Without changing any content, convert the following plain resume text into **valid structured JSON**.
-
-DO NOT enhance or modify any text. Simply extract it into this structure exactly as it appears:
+Without changing any content, convert the following resume text into valid structured JSON.
 
 {
-  "personalInfo": {
-    "fullName": "string",
-    "email": "string",
-    "phone": "string",
-    "location": "string",
-    "website": "string",
-    "summary": "string"
-  },
-  "experience": [
-    {
-      "id": 1,
-      "company": "string",
-      "position": "string",
-      "startDate": "string",
-      "endDate": "string",
-      "description": "string",
-      "current": false
-    }
-  ],
-  "education": [
-    {
-      "id": 1,
-      "school": "string",
-      "degree": "string",
-      "field": "string",
-      "startDate": "string",
-      "endDate": "string",
-      "gpa": "string"
-    }
-  ],
-  "skills": [
-    {
-      "id": 1,
-      "name": "string",
-      "level": "string"
-    }
-  ],
-  "projects": [
-    {
-      "id": 1,
-      "name": "string",
-      "description": "string",
-      "technologies": "string",
-      "url": "string"
-    }
-  ]
+  "personalInfo": {...},
+  "experience": [...],
+  "education": [...],
+  "skills": [...],
+  "projects": [...]
 }
 
-⚠️ Do NOT add any commentary or explanation. Only return clean JSON.
-
-Here is the resume text to convert:
-${trimmedResume}
-`;
+⚠️ Do not include commentary or markdown.
+Resume text:
+${trimmedResume}`;
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
-    const content = (await result.response).text().trim();
+    const content = (await result.response).text().trim().replace(/```json|```/g, "");
 
-    const cleaned = content.replace(/```json|```/g, "").trim();
+    const repairedJson = jsonrepair(content);
+    const parsed = JSON.parse(repairedJson);
 
-    try {
-      const repairedJson = jsonrepair(cleaned);
-      const parsed = JSON.parse(repairedJson);
-      return res.json(parsed);
-    } catch (repairErr) {
-      console.error("JSON repair failed:", repairErr);
-      return res.status(500).json({
-        error: "AI returned malformed JSON that couldn't be fixed.",
-        raw: content,
-      });
-    }
+    return res.json(parsed);
   } catch (err) {
     console.error("Gemini API error:", err);
     res.status(500).json({ error: "Failed to format resume using Gemini." });
   }
 });
 
+// ✅ Generate PDF from HTML
 app.post("/generate-pdf", async (req, res) => {
   const { html } = req.body;
 
-  if (!html || typeof html !== "string") {
+  if (!html || typeof html !== "string")
     return res.status(400).json({ error: "Invalid or missing HTML content." });
-  }
 
   try {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-
+    const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
     const page = await browser.newPage();
-
-    // Set the HTML content directly
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    // Generate the PDF buffer
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-    });
-
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
     await browser.close();
 
-    // Set headers and send PDF
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": 'attachment; filename="resume.pdf"',
@@ -371,16 +187,140 @@ app.post("/generate-pdf", async (req, res) => {
 
     res.send(pdfBuffer);
   } catch (error) {
-    console.error("Error generating PDF:", error.message);
+    console.error("PDF generation error:", error.message);
     res.status(500).json({ error: "Failed to generate PDF." });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello from the backend!");
-})
+// ✅ LinkedIn Scraping (Basic Public Info)
+app.post("/fetch-linkedin", async (req, res) => {
+  const { url } = req.body;
+
+  if (!url || !url.includes("linkedin.com/in/"))
+    return res.status(400).json({ error: "Please provide a valid LinkedIn profile URL." });
+
+  try {
+    const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
+    const page = await browser.newPage();
+
+    await page.setUserAgent("Mozilla/5.0 Chrome/115.0.0.0 Safari/537.36");
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const profileData = await page.evaluate(() => {
+      const getText = (selector) => document.querySelector(selector)?.textContent?.trim() || null;
+
+      return {
+        name: getText("h1.text-heading-xlarge") || getText("h1"),
+        headline: getText("div.text-body-medium.break-words"),
+        location: getText("span.text-body-small.inline.t-black--light.break-words"),
+        about: getText("#about ~ div p") || getText("#about ~ div span"),
+      };
+    });
+
+    await browser.close();
+
+    res.json({ message: "Profile fetched successfully.", profileData });
+  } catch (err) {
+    console.error("LinkedIn fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch LinkedIn page." });
+  }
+});
+
+// ✅ Joke Endpoint
+app.get("/give-joke", async (req, res) => {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const result = await model.generateContent("Tell me a random funny joke.");
+    const joke = (await result.response).text().trim();
+
+    if (!joke) return res.status(500).json({ error: "No joke generated." });
+    return res.json({ joke });
+  } catch (err) {
+    console.error("Joke generation error:", err);
+    res.status(500).json({ error: "Failed to generate joke." });
+  }
+});
+
+// ✅ Analyze Resume
+app.post("/analyze", upload.single("resume"), async (req, res) => {
+  const file = req.file;
+  if (!file || !allowedFile(file.originalname))
+    return res.status(400).json({ success: false, error: "Invalid file format" });
+
+  try {
+    const resumeText = await extractText(file.path);
+    const result = await analyzeResumeWithLLM(resumeText);
+    await fs.remove(file.path);
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error("Analyze error:", err);
+    res.status(500).json({ success: false, error: "Error during resume analysis" });
+  }
+});
+
+// ✅ Rank Resumes
+app.post("/rank", upload.array("resumes"), async (req, res) => {
+  const {
+    jd_text = "",
+    tech_skills = "",
+    soft_skills = "",
+    top_n,
+    weight_skills = 0,
+    weight_experience = 0,
+    weight_education = 0,
+    weight_projects = 0,
+    weight_achievements = 0,
+  } = req.body;
+
+  if (!jd_text || !req.files || req.files.length === 0)
+    return res.status(400).json({ error: "Job description or resume files missing" });
+
+  try {
+    const techList = tech_skills.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const softList = soft_skills.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const customWeights = {
+      skills: parseFloat(weight_skills),
+      experience: parseFloat(weight_experience),
+      education: parseFloat(weight_education),
+      projects: parseFloat(weight_projects),
+      achievements: parseFloat(weight_achievements),
+    };
+
+    const results = [];
+
+    for (const file of req.files) {
+      const parsed = await extractTextAndEmail(file);
+      const score = await scoreResumeWithLLM({
+        resumeText: parsed.text,
+        jdText: jd_text,
+        apiKey: process.env.API_KEY,
+        techSkills: techList,
+        softSkills: softList,
+        customWeights,
+      });
+
+      results.push({ ...score, file_name: parsed.file_name, email: parsed.email });
+    }
+
+    results.sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
+    const topResults = top_n ? results.slice(0, parseInt(top_n)) : results;
+
+    res.json({ results: topResults, tech_skills: techList, soft_skills: softList });
+  } catch (err) {
+    console.error("Ranking error:", err);
+    res.status(500).json({ error: err.message, trace: err.stack });
+  }
+});
+
+// ✅ Health Check
+app.get("/health", (req, res) => res.json({ status: "healthy" }));
+
+// ✅ Root
+app.get("/", (req, res) => res.send("Hello from the unified backend! 🚀"));
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`🚀 API running on http://localhost:${PORT}`);
+  console.log(`🚀 Unified server running on http://localhost:${PORT}`);
 });
