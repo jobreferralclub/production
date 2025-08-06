@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from "@/components/Navigation";
 import './ResumeAnalyzer.css';
+import TemplateSelectionPopup from '@/components/resume-builder/TemplateSelectionPopup';
 
 const ResumeAnalyzer: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const ResumeAnalyzer: React.FC = () => {
     formData.append('resume', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:3000/analyze', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/analyze', {
         method: 'POST',
         body: formData,
       });

@@ -14,6 +14,7 @@ import useResumeStore, {
     Project,
 } from "@/store/useResumeStore";
 import LivePreview from "@/components/resume-builder/LivePreview";
+import TemplateSelectionPopup from "@/components/resume-builder/TemplateSelectionPopup";
 
 const ResumeEnhancer = () => {
     const [resumeText, setResumeText] = useState("");
