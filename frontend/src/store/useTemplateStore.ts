@@ -7,7 +7,7 @@ interface TemplateStore {
 }
 
 const useTemplateStore = create<TemplateStore>((set) => ({
-    currentTemplate: 'template1',
+    currentTemplate: null,
     setCurrentTemplate: (template) => set({ currentTemplate: template }),
 }));
 

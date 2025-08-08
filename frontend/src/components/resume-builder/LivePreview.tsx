@@ -1,5 +1,5 @@
 // LivePreview.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import useTemplateStore from "../../store/useTemplateStore";
 import { templates } from "../../components/resume-builder/Templates";
 import TemplateSelectionPopup from "./TemplateSelectionPopup";
@@ -9,9 +9,8 @@ const LivePreview: React.FC = () => {
   const Template = templates[currentTemplate];
 
   return (
-    <div style={{ fontSize: '0.75rem' }}> {/* This will make everything 75% of normal size */}
-      <TemplateSelectionPopup />
-      <Template />
+    <div style={{ fontSize: "0.75rem" }}>
+      {Template && <Template />}
     </div>
   );
 };

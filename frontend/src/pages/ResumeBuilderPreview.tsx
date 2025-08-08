@@ -8,6 +8,8 @@ import SkillsInfo from "../components/resume-builder/SkillsInfo";
 import ProjectsInfo from "../components/resume-builder/ProjectsInfo";
 import LivePreview from "../components/resume-builder/LivePreview";
 import ResumeDownloadButton from "../components/resume-builder/ResumeDownloadButton";
+import TemplateSelectionPopup from "@/components/resume-builder/TemplateSelectionPopup";
+import useTemplateStore from "@/store/useTemplateStore";
 
 const sections = [
   "Personal Info",
@@ -23,6 +25,9 @@ type Section = typeof sections[number];
 const ResumeBuilderPreview: React.FC = () => {
   const [animateIn, setAnimateIn] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [showTemplatePopup, setShowTemplatePopup] = useState(false);
+  const [popupShownOnce, setPopupShownOnce] = useState(false);
+  const currentTemplate = useTemplateStore((state) => state.currentTemplate);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -30,6 +35,13 @@ const ResumeBuilderPreview: React.FC = () => {
     }, 10);
     return () => clearTimeout(timeout);
   }, []);
+
+  useEffect(() => {
+    if (!popupShownOnce && !currentTemplate) {
+      setShowTemplatePopup(true);
+      setPopupShownOnce(true);
+    }
+  }, [currentTemplate, popupShownOnce]);
 
   const renderSection = () => {
     switch (sections[currentStep]) {
@@ -59,10 +71,12 @@ const ResumeBuilderPreview: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {showTemplatePopup && (
+        <TemplateSelectionPopup />
+      )}
       <div
-        className={`mx-auto transition-all duration-500 ease-out transform ${
-          animateIn ? "opacity-100 scale-100" : "opacity-0 scale-95"
-        }`}
+        className={`mx-auto transition-all duration-500 ease-out transform ${animateIn ? "opacity-100 scale-100" : "opacity-0 scale-95"
+          }`}
       >
         <div className="flex flex-col lg:flex-row items-start min-h-screen">
           {/* Left Side (Sidebar + Form) */}
@@ -89,11 +103,10 @@ const ResumeBuilderPreview: React.FC = () => {
                         <Circle className="text-gray-600" />
                       )}
                       <span
-                        className={`text-sm ${
-                          isCompleted || isActive
+                        className={`text-sm ${isCompleted || isActive
                             ? "text-white font-medium"
                             : "text-gray-500 group-hover:text-white"
-                        }`}
+                          }`}
                       >
                         {section}
                       </span>
