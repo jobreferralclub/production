@@ -12,6 +12,9 @@ const { jsonrepair } = require("jsonrepair");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
+// Google Sheets API
+const { google } = require("googleapis");
+
 // Custom LLM modules
 const { analyzeResumeWithLLM } = require("./resumeAnalyzer");
 const { extractText } = require("./resumeParser");
@@ -43,6 +46,8 @@ const ALLOWED_EXTENSIONS = [".pdf", ".docx"];
 function allowedFile(filename) {
   return ALLOWED_EXTENSIONS.includes(path.extname(filename).toLowerCase());
 }
+
+/* ================== RESUME ENDPOINTS ================== */
 
 // ✅ Extract Text from Resume
 app.post("/extract-text", upload.single("resume"), async (req, res) => {
@@ -314,13 +319,64 @@ app.post("/rank", upload.array("resumes"), async (req, res) => {
   }
 });
 
-// ✅ Health Check
+/* ================== GOOGLE SHEETS ENDPOINT ================== */
+
+const credentials = JSON.parse(fs.readFileSync(path.join(__dirname, "credentials.json"), "utf-8"));
+const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
+
+const auth = new google.auth.GoogleAuth({
+  credentials,
+  scopes: SCOPES,
+});
+
+const SHEET_ID = "1ZUTCPSQIZVM5fbdYQ3mUBnteQfN9N7rUAw8z1UX0T_g";
+const RANGE = "Sheet1!B2:B9"; // Only fetch open role numbers
+
+const JOB_TITLES = [
+  "Product Management",
+  "Program & Project Management",
+  "Operations & Supply Chain Management",
+  "Sales & Account Management",
+  "Category & Vendor Management",
+  "Analytics",
+  "Strategy & Consulting",
+  "Marketing Management",
+];
+
+app.get("/api", (req, res) => {
+  res.end("Hello from the server!");
+});
+
+app.get("/api/roles", async (req, res) => {
+  try {
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: "v4", auth: client });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: RANGE,
+    });
+
+    const rows = response.data.values || [];
+
+    const openRoles = JOB_TITLES.map((title, index) => ({
+      title,
+      count: Number(rows[index]?.[0] || 0),
+    }));
+
+    res.json({ openRoles });
+  } catch (error) {
+    console.error("Error fetching data:", error.message);
+    res.status(500).json({ error: "Failed to fetch roles" });
+  }
+});
+
+/* ================== HEALTH CHECK ================== */
+
 app.get("/health", (req, res) => res.json({ status: "healthy" }));
 
-// ✅ Root
 app.get("/", (req, res) => res.send("Hello from the unified backend! 🚀"));
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Unified server running on http://localhost:${PORT}`);
 });

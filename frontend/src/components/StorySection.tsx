@@ -83,7 +83,8 @@ const StorySection = () => {
           </div>
         </motion.div>
 
-        {/* Testimonials Grid */}
+        {/* Testimonials Grid (commented out) */}
+        {/*
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testimonials.map((testimonial, index) => (
             <motion.div
@@ -95,15 +96,10 @@ const StorySection = () => {
             >
               <Card className="h-full bg-black/50 border-gray-800 hover:border-primary-green/30 card-hover">
                 <CardContent className="p-6">
-                  {/* Quote icon */}
                   <Quote className="w-8 h-8 text-primary-green/60 mb-4" />
-
-                  {/* Content */}
                   <p className="text-gray-300 leading-relaxed mb-6 text-sm">
                     "{testimonial.content}"
                   </p>
-
-                  {/* Metrics */}
                   <div className="flex items-center justify-between mb-4 p-3 bg-primary-green/5 rounded-lg border border-primary-green/20">
                     <div className="text-center">
                       <div className="text-primary-green font-semibold text-sm">
@@ -118,8 +114,6 @@ const StorySection = () => {
                       <div className="text-gray-500 text-xs">Timeline</div>
                     </div>
                   </div>
-
-                  {/* Author */}
                   <div className="flex items-center gap-3">
                     <img
                       src={testimonial.image}
@@ -143,6 +137,7 @@ const StorySection = () => {
             </motion.div>
           ))}
         </div>
+        */}
 
         {/* Bottom CTA */}
         <motion.div

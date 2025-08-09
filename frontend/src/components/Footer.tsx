@@ -82,7 +82,7 @@ const Footer = () => {
             >
               <div className="flex items-center gap-3 mb-6">
                 <img
-                  src="https://jobreferral.club/assets/dark_bg_logo.png"
+                  src="/logo.jpg"
                   alt="JobReferral.Club Logo"
                   className="w-14 h-14 object-contain"
                 />

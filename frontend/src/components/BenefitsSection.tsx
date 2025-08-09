@@ -16,7 +16,7 @@ const BenefitsSection = () => {
   const benefits = [
   {
     icon: Network,
-    title: "Insider Access",
+    title: "Priority Access",
     description: "Connect directly with employees at your target companies. Skip the black hole of online applications.",
     color: "text-primary-green"
   },

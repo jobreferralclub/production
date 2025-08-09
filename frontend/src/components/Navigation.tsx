@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { motion } from "motion/react";
-import { ArrowRight, Menu, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -12,7 +12,6 @@ const Navigation = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -21,17 +20,26 @@ const Navigation = () => {
     { label: "How It Works", href: "#how-it-works" },
     { label: "Categories", href: "#categories" },
     { label: "Success Stories", href: "#stories" },
+    { label: "Simulations", href: "#practice" },
   ];
+
+  const handleJoin = () => {
+    alert(
+      "You’ll be redirected to our community.\nClick Sign Up, complete the steps, and confirm via the magic link sent to your Gmail."
+    );
+    window.open("https://community.jobreferral.club", "_blank");
+  };
 
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.8 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-          ? "bg-black/95 backdrop-blur-md border-b border-gray-800/50"
+      className={`fixed top-0 left-0 right-0 z-[1000] transition-all duration-300 ${
+        isScrolled
+          ? "bg-black/95 backdrop-blur-md border-b border-gray-800/50 shadow-lg"
           : "bg-transparent"
-        }`}
+      }`}
     >
       <div className="w-full max-w-[1440px] mx-auto px-4">
         <div className="flex justify-between items-center h-16">
@@ -42,9 +50,9 @@ const Navigation = () => {
             className="flex items-center gap-3 transition-all duration-300"
           >
             <img
-              src="https://jobreferral.club/assets/dark_bg_logo.png"
+              src="/logo.jpg"
               alt="JobReferral.Club Logo"
-              className="w-12 h-12 object-contain"
+              className="w-12 h-12 object-contain rounded-full"
             />
             <div className="font-bold text-xl text-white whitespace-nowrap">
               JobReferral<span className="text-primary-green">.Club</span>
@@ -64,115 +72,104 @@ const Navigation = () => {
               </motion.a>
             ))}
 
-            {/* Services with Dropdown */}
+            {/* Services Dropdown */}
             <div
-              className="relative group cursor-pointer"
+              className="relative"
               onMouseEnter={() => setServicesOpen(true)}
               onMouseLeave={() => setServicesOpen(false)}
             >
-              <div className="flex items-center text-gray-300 hover:text-primary-green transition-all duration-300 font-medium">
+              <div className="flex items-center text-gray-300 hover:text-primary-green transition-all duration-300 font-medium cursor-pointer">
                 Services
                 <ChevronDown className="w-4 h-4 ml-1" />
               </div>
-              {/* Dropdown Menu - absolutely positioned, no gap */}
-              {servicesOpen && (
-                <div className="absolute left-0 top-full bg-black rounded-lg border border-gray-800 w-52 shadow-lg z-50">
-                  <a
-                    href="./ai-resume-builder"
-                    className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
+              <AnimatePresence>
+                {servicesOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute left-0 top-full mt-2 bg-black rounded-lg border border-gray-800 w-56 shadow-lg z-50 overflow-hidden"
                   >
-                    Resume Builder
-                  </a>
-                  <a
-                    href="./resume-ranker"
-                    className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
-                  >
-                    Resume Ranker
-                  </a>
-                  <a
-                    href="./resume-analyzer"
-                    className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
-                  >
-                    Resume Analyzer
-                  </a>
-                  <a
-                    href="#practice"
-                    className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
-                  >
-                    Simulations
-                  </a>
-                </div>
-              )}
+                    {[
+                      { label: "Resume Builder", href: "./ai-resume-builder" },
+                      { label: "Resume Ranker", href: "./resume-ranker" },
+                      { label: "Resume Analyzer", href: "./resume-analyzer" },
+                    ].map((service, idx) => (
+                      <a
+                        key={idx}
+                        href={service.href}
+                        className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
+                      >
+                        {service.label}
+                      </a>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-
           </div>
 
-          {/* CTA + Hamburger */}
+          {/* CTA + Mobile Menu Button */}
           <div className="flex items-center gap-4">
             <div className="hidden lg:block">
               <Button
-                onClick={() =>
-                  window.open("https://community.jobreferral.club", "_blank")
-                }
+                onClick={handleJoin}
                 className="btn-primary group transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary-green/20 whitespace-nowrap"
               >
-                Join Now
+                Sign In / Sign Up
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </div>
-
-            {/* Mobile Menu Icon */}
             <div className="lg:hidden">
-              <Menu
-                className="w-6 h-6 text-white cursor-pointer"
-                onClick={() => setMenuOpen(!menuOpen)}
-              />
+              {menuOpen ? (
+                <X
+                  className="w-6 h-6 text-white cursor-pointer"
+                  onClick={() => setMenuOpen(false)}
+                />
+              ) : (
+                <Menu
+                  className="w-6 h-6 text-white cursor-pointer"
+                  onClick={() => setMenuOpen(true)}
+                />
+              )}
             </div>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="lg:hidden mt-2 bg-black px-4 py-4 rounded-b-lg border-t border-gray-800">
-            <div className="flex flex-col gap-4">
-              {navItems.map((item, index) => (
-                <a
-                  key={index}
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-gray-300 hover:text-primary-green transition-colors duration-300 font-medium"
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="lg:hidden mt-2 bg-black px-4 py-4 rounded-b-lg border-t border-gray-800 overflow-hidden"
+            >
+              <div className="flex flex-col gap-4">
+                {navItems.map((item, index) => (
+                  <a
+                    key={index}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="text-gray-300 hover:text-primary-green transition-colors duration-300 font-medium"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <Button
+                  onClick={() => {
+                    handleJoin();
+                    setMenuOpen(false);
+                  }}
+                  className="btn-primary group transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary-green/20"
                 >
-                  {item.label}
-                </a>
-              ))}
-              {/* Mobile Dropdown Items Inline */}
-              <a
-                href="/ai-resume-builder"
-                onClick={() => setMenuOpen(false)}
-                className="text-gray-300 hover:text-primary-green transition-colors duration-300 font-medium"
-              >
-                Resume Builder
-              </a>
-              <a
-                href="#practice"
-                onClick={() => setMenuOpen(false)}
-                className="text-gray-300 hover:text-primary-green transition-colors duration-300 font-medium"
-              >
-                Simulations
-              </a>
-              <Button
-                onClick={() => {
-                  window.open("https://community.jobreferral.club", "_blank");
-                  setMenuOpen(false);
-                }}
-                className="btn-primary group transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary-green/20"
-              >
-                Join Now
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </Button>
-            </div>
-          </div>
-        )}
+                  Join Now
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.nav>
   );

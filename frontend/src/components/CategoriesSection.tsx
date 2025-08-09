@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,12 +18,11 @@ const baseCategories = [
   {
     icon: BarChart3,
     title: "Product Management",
-    description: "Connect with PMs at top tech companies. Get insider insights on product strategy roles.",
+    description: "Connect with PMs at top tech companies. Get insights on product strategy roles.",
     avgSalary: "$145K",
     companies: ["Google", "Meta", "Uber"],
     color: "bg-primary-green/10 border-primary-green/30",
     iconColor: "text-primary-green",
-    openRoles: 234,
   },
   {
     icon: Layers3,
@@ -33,7 +32,6 @@ const baseCategories = [
     companies: ["Microsoft", "Amazon", "Atlassian"],
     color: "bg-blue-500/10 border-blue-500/30",
     iconColor: "text-blue-400",
-    openRoles: 189,
   },
   {
     icon: Briefcase,
@@ -43,7 +41,6 @@ const baseCategories = [
     companies: ["Tesla", "SpaceX", "DoorDash"],
     color: "bg-red-500/10 border-red-500/30",
     iconColor: "text-red-400",
-    openRoles: 167,
   },
   {
     icon: Users,
@@ -53,7 +50,6 @@ const baseCategories = [
     companies: ["Salesforce", "HubSpot", "Stripe"],
     color: "bg-green-500/10 border-green-500/30",
     iconColor: "text-green-400",
-    openRoles: 198,
   },
   {
     icon: ShoppingCart,
@@ -63,7 +59,6 @@ const baseCategories = [
     companies: ["Amazon", "Walmart", "Target"],
     color: "bg-purple-500/10 border-purple-500/30",
     iconColor: "text-purple-400",
-    openRoles: 95,
   },
   {
     icon: PieChart,
@@ -73,7 +68,6 @@ const baseCategories = [
     companies: ["Netflix", "Airbnb", "Spotify"],
     color: "bg-cyan-500/10 border-cyan-500/30",
     iconColor: "text-cyan-400",
-    openRoles: 312,
   },
   {
     icon: TrendingUp,
@@ -83,7 +77,6 @@ const baseCategories = [
     companies: ["McKinsey", "BCG", "Bain"],
     color: "bg-indigo-500/10 border-indigo-500/30",
     iconColor: "text-indigo-400",
-    openRoles: 156,
   },
   {
     icon: Megaphone,
@@ -93,26 +86,38 @@ const baseCategories = [
     companies: ["HubSpot", "Shopify", "Adobe"],
     color: "bg-orange-500/10 border-orange-500/30",
     iconColor: "text-orange-400",
-    openRoles: 203,
   },
 ];
 
 const CategoriesSection = () => {
-  const [categories, setCategories] = useState(baseCategories);
+  const [categories, setCategories] = useState(
+    baseCategories.map((cat) => ({ ...cat, openRoles: 0 }))
+  );
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCategories((prev) =>
-        prev.map((cat) => {
-          const delta = Math.floor(Math.random() * 10) - 5; // -5 to +4
-          let newCount = cat.openRoles + delta;
-          if (newCount < 50) newCount = 50;
-          return { ...cat, openRoles: newCount };
-        })
-      );
-    }, 5000); // update every 5 seconds
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch(import.meta.env.VITE_API_URL + "/api/roles");
+        const data = await res.json();
 
-    return () => clearInterval(interval);
+        const updated = baseCategories.map((category) => {
+          const match = data.openRoles.find(
+            (role: { title: string; count: number }) => role.title === category.title
+          );
+          return {
+            ...category,
+            openRoles: match ? match.count : 0,
+          };
+        });
+
+        setCategories(updated);
+      } catch (err) {
+        console.error("Failed to fetch role counts:", err);
+        // Keep fallback values (0 open roles)
+      }
+    };
+
+    fetchCounts();
   }, []);
 
   return (
@@ -148,7 +153,10 @@ const CategoriesSection = () => {
                     <div className="w-12 h-12 rounded-lg bg-gray-900/50 flex items-center justify-center group-hover:bg-gray-900/70 transition-colors duration-300">
                       <category.icon className={`w-6 h-6 ${category.iconColor}`} />
                     </div>
-                    <Badge variant="secondary" className="bg-primary-green/20 text-primary-green border-primary-green/30">
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary-green/20 text-primary-green border-primary-green/30"
+                    >
                       {category.openRoles} open
                     </Badge>
                   </div>
@@ -156,7 +164,6 @@ const CategoriesSection = () => {
                     {category.title}
                   </CardTitle>
                 </CardHeader>
-
                 <CardContent className="space-y-4">
                   <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
                     {category.description}

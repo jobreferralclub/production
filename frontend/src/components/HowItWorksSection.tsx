@@ -26,7 +26,7 @@ const HowItWorksSection = () => {
     icon: Search,
     title: "Find Your Connections",
     description: "Browse our network of professionals at your target companies. Filter by role, company, and industry.",
-    details: ["Advanced search filters", "Company insider database", "Role-specific matching"],
+    details: ["Advanced search filters","Role-specific matching"],
     color: "text-blue-400"
   },
   {
