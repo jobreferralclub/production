@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const STRAICO_API_URL = "https://api.straico.com/v1/prompt/completion";
 
@@ -109,7 +109,7 @@ function safeJsonFromLLM(content) {
     }
 }
 
-async function scoreResumeWithLLM({ resumeText, jdText, apiKey, techSkills, softSkills, customWeights = null }) {
+export const scoreResumeWithLLM =  async  ({ resumeText, jdText, apiKey, techSkills, softSkills, customWeights = null }) => {
     const prompt = generatePrompt(jdText, resumeText, techSkills, softSkills, customWeights);
     
     const headers = {
@@ -148,9 +148,3 @@ async function scoreResumeWithLLM({ resumeText, jdText, apiKey, techSkills, soft
         };
     }
 }
-
-module.exports = {
-    scoreResumeWithLLM,
-    generatePrompt,
-    safeJsonFromLLM
-};

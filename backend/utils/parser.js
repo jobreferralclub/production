@@ -1,47 +1,8 @@
-const pdfParse = require('pdf-parse');
-const mammoth = require('mammoth');
-
-// Extract PDF text
-async function extractTextFromPdf(file) {
-    try {
-        let dataBuffer;
-        
-        if (file.buffer) {
-            dataBuffer = file.buffer;
-        } else if (file.path) {
-            const fs = require('fs');
-            dataBuffer = fs.readFileSync(file.path);
-        } else {
-            throw new Error('Invalid file object');
-        }
-        
-        const data = await pdfParse(dataBuffer);
-        return data.text || '';
-    } catch (error) {
-        console.error('Error extracting PDF text:', error);
-        return '';
-    }
-}
-
-// Extract DOCX text
-async function extractTextFromDocx(file) {
-    try {
-        let result;
-        
-        if (file.buffer) {
-            result = await mammoth.extractRawText({ buffer: file.buffer });
-        } else if (file.path) {
-            result = await mammoth.extractRawText({ path: file.path });
-        } else {
-            throw new Error('Invalid file object');
-        }
-        
-        return result.value || '';
-    } catch (error) {
-        console.error('Error extracting DOCX text:', error);
-        return '';
-    }
-}
+// import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
+import path from 'path';
+import fs from 'fs';
+import pdfParser from "pdf-parser";
 
 // Extract first email found
 function extractEmail(text) {
@@ -51,35 +12,51 @@ function extractEmail(text) {
 }
 
 // Extract text + email from file
-async function extractTextAndEmail(file) {
+export const extractTextAndEmail = async (file) => {
     const fileName = file.originalname || file.filename || file.name || 'unknown';
-    
+
     let text = '';
-    
-    if (fileName.toLowerCase().endsWith('.pdf')) {
-        text = await extractTextFromPdf(file);
-    } else if (fileName.toLowerCase().endsWith('.docx')) {
-        text = await extractTextFromDocx(file);
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    console.log(file.originalname, ext)
+
+    if (ext === ".pdf") {
+        // ✅ Handle PDF
+        pdfParser.pdf2json(file.path, (error, pdf) => {
+            if (error) {
+                console.error("❌ pdf-parser error:", error);
+                return res.status(500).json({ error: "Failed to parse PDF" });
+            }
+
+            // Flatten the text content from all pages
+            let extractedText = "";
+            pdf.pages.forEach((page) => {
+                const pageText = page.texts.map((t) => t.text).join(" ");
+                extractedText += pageText + "\n";
+            });
+
+            // cleanup temp file
+            fs.unlinkSync(file.path);
+            text = extractedText.trim();
+
+        });
+
+    } else if (ext === ".docx") {
+        // ✅ Handle DOCX with mammoth
+        const { value } = await mammoth.extractRawText({ path: file.path });
+        text = value.trim()
+
     } else {
-        return {
-            file_name: fileName,
-            email: 'Unsupported file type',
-            text: ''
-        };
+        // ❌ Unsupported
+        fs.unlinkSync(file.path);
+        return res.status(400).json({ error: "Unsupported file type. Only PDF and DOCX are allowed." });
     }
-    
+
     const email = extractEmail(text);
-    
+
     return {
         file_name: fileName,
         email: email || 'Not Found',
         text: text.trim()
     };
 }
-
-module.exports = {
-    extractTextFromPdf,
-    extractTextFromDocx,
-    extractEmail,
-    extractTextAndEmail
-};
