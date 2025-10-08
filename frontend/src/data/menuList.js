@@ -22,8 +22,8 @@ export const menuItems = [
                 name: "Community Hub",
                 children: [
                     { name: "Introductions", path: "/community/introductions" },
-                    { name: "Ask the Community", path: "/community/ask-the-community" },
-                    { name: "Announcements", path: "/community/announcements" },
+                    // { name: "Ask the Community", path: "/community/ask-the-community" },
+                    // { name: "Announcements", path: "/community/announcements" },
                     { name: "Club Guidelines", path: "/community/club-guidelines" },
                 ],
             },
@@ -31,7 +31,7 @@ export const menuItems = [
                 name: "India Jobs",
                 region: "india",
                 children: [
-                    { name: "Fresher Jobs", path: "/community/in/freshers" },
+                    { name: "Freshers Jobs", path: "/community/in/freshers" },
                     { name: "Operations and Supply Chain Management", path: "/community/in/operations" },
                     { name: "Program and Project Management", path: "/community/in/program" },
                     { name: "Product Management", path: "/community/in/product" },

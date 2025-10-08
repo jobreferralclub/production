@@ -16,6 +16,7 @@ const __dirname = path.dirname(__filename);
 // === Initialize Express App ===
 const app = express();
 
+
 // === Middleware ===
 app.use(cors());
 app.use(express.json());
@@ -31,9 +32,11 @@ import otpRoutes from "./routes/otp.js";
 import uploadRoutes from "./routes/upload.js";
 import analyticsRoutes from "./routes/analytics.js";
 // import rolesStatsRoutes from "./routes/rolesStats.js";
+import notificationRoutes from "./routes/notification.js";
 import resumeRoutes from "./routes/resume.js";
 import communityRoutes from  "./routes/community.js";
 import searchRoutes from "./routes/search.js";
+import blogRoutes from "./routes/blogs.js";
 import { giveJoke } from "./controllers/give-joke.controller.js";
 
 
@@ -44,6 +47,7 @@ app.use("/api/companies", companyRoutes);
 app.use("/api", uploadRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/communities", communityRoutes);
+app.use("/api/notifications", notificationRoutes)
 
 // Login/Signup
 app.use("/api/auth", authRoutes);
@@ -63,6 +67,9 @@ app.get('/api/give-joke', giveJoke);
 
 // Search
 app.use("/api/search", searchRoutes);
+
+//Blogs
+app.use("/api/blogs", blogRoutes);
 
 //Fetching Job Posts from Google sheet
 

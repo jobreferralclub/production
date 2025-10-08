@@ -10,7 +10,7 @@ document.documentElement.classList.add('dark');
 createRoot(document.getElementById('root')).render(
   <Auth0Provider
     domain="jobreferralclub.us.auth0.com"
-    clientId="l2I254y6VwAzHHPWL73tZyYNWlK6mRH8"
+    clientId="a9M853RFnaY99WW9zAEawG1mgorJK8zH"
     authorizationParams={{
       redirect_uri: window.location.origin
     }}

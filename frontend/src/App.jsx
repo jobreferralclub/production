@@ -40,6 +40,10 @@ import MockInterviewer from "./pages/mock-interviewer/MockInterviewer";
 import Interview from "./pages/mock-interviewer/Interview";
 import SummaryPage from "./pages/mock-interviewer/SummaryPage";
 import CoverLetterPage from "./pages/application-kit/CoverLetterPage";
+import SuccessStories from "./pages/SuccessStories";
+import Blog from "./pages/Blog";
+import BlogEditor from "./pages/Blog/BlogEditor";
+import BlogDetail from "./pages/Blog/BlogDetail";
 
 function AppWrapper() {
   const { user, userId, login, setRole } = useAuthStore();
@@ -188,6 +192,12 @@ function AppWrapper() {
         {/* ✅ Landing page (always public) */}
         <Route path="/" element={<Landing />} />
 
+        <Route path="/success-stories" element={<SuccessStories/>} />
+        <Route path="/blogs" element={<Blog/>} />
+        <Route path="/blogs/:id" element={<BlogDetail/>} />
+        <Route path="/blogs/editor" element={<BlogEditor/>} />
+        <Route path="/blogs/editor/:id" element={<BlogEditor/>} />
+
         {/* Resume Builder */}
         <Route path="/resume-builder" element={<ResumeBuilder />} />
         <Route path="/resume-builder/questionnaire" element={<ResumeBuilderQuestionnaire />} />
@@ -265,6 +275,7 @@ function AppWrapper() {
             <Route path="/community/coaching" element={<Layout><Coaching /></Layout>} />
             <Route path="/community/courses" element={<Layout><CourseBuilder /></Layout>} />
             <Route path="/community/settings" element={<Layout><Settings /></Layout>} />
+            <Route path="resume-from-linkedin" element={<ResumeFromLinkedin />} />
             <Route path="/community/auth/callback" element={<AuthCallback />} />
 
             {/* Fallback for unknown /community routes */}

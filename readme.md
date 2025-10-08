@@ -1,4 +1,4 @@
-# jobreferralclub/production
+# jobreferralclub/community
 
 Welcome to the **Job Referral Club Community Repository**!  
 This project serves as the central hub for the Job Referral Club’s open-source community resources, tools, and discussions.
