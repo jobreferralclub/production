@@ -1,4 +1,5 @@
 // config.mjs or config.js (with "type": "module" in package.json)
+
 export const OPERATIONS_INDIA_SHEET_ID = '16Ah4jJacxSLoRWaPwDvJdj5Q5gp22lO_RUYN_Yq3enU';
 export const PROGRAM_AND_PROJECT_INDIA_SHEET_ID = '1l-3mXXMnb1IkdqUX-oY2bWtZWRO_plUU91wULMYG2AI';
 export const PRODUCT_INDIA_SHEET_ID = '1Zmyn1-VCr2RIMtw7HOukeEv2TVNN2jGCeSgyNy4_D_E';
@@ -9,7 +10,7 @@ export const FINANCE_INDIA_SHEET_ID = '1lD8q8QnD513_16WFPf_5cAeMlse1nGYXfV0Ua2Zz
 export const HUMAN_RESOURCES_INDIA_SHEET_ID = '1UPaiBNQxVrgeHxzCjVzHtoyz2AVEBiZBuTokpctSdd4';
 export const ANALYTICS_INDIA_SHEET_ID = '1mij9BqWYi4vFsi84yB17m3_XO0pbV7IBgGVnIVC0zLE';
 export const STRATEGY_INDIA_SHEET_ID = '1IfreZrLH7RNo5QEXs6IqV5dXlsrXFoLug34WkhLExeo';
-export const FRESHERS_INDIA_SHEET_ID = '1etCn8GlRisAE7aExW2FDzfqZxYOnlYOHj2qucSIotDg';
+export const FRESHERS_INDIA_SHEET_ID = '1dlCA59h-0Zi21uSKR2qtKVDGX2DBrdA9dvmizufwB1Q';
 
 export const OPERATIONS_US_SHEET_ID = '11ZaBh9RSAQVyF4pG2UOc4BgnSwlRKYyddVOO38YGCqo';
 export const PROGRAM_AND_PROJECT_US_SHEET_ID = '1mnKBsAm86JFvj1GnxlRfmISxoIbF1kVDT_U7uApfE8E';
@@ -23,3 +24,6 @@ export const ANALYTICS_US_SHEET_ID = '1QrtUikquNmHM4it8R18vDYMptvDiDiLHOng5xD-z1
 export const STRATEGY_US_SHEET_ID = '1z3o-eh8fRap7wZr21-X6im9izuRhP-IdGhM75i48JQQ';
 
 export const SHEET_RANGE = 'Sheet1!A1:M100';
+
+// export const FRESHERS_INDIA_SHEET_ID = '1dlCA59h-0Zi21uSKR2qtKVDGX2DBrdA9dvmizufwB1Q';
+// export const SHEET_RANGE = 'Sheet2!A1:Q100';

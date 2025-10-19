@@ -13,6 +13,7 @@ import ProductsDropdown from "./ProductsDropdown";
 const { FiMenu, FiSearch, FiHelpCircle, FiBookOpen, FiBell } = FiIcons;
 
 const Navigation = () => {
+  
   const { user, logout } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -311,7 +312,7 @@ const Navigation = () => {
           </div>
 
           {/* Right Section: Ask + Guidelines + Notifications */}
-          <div className="flex items-center gap-4 relative">
+          <div className="hidden lg:flex items-center gap-4 relative">
             {/* Notifications */}
             <div className="relative group">
               <button
@@ -460,35 +461,38 @@ const Navigation = () => {
                   <span className="text-gray-300 font-medium">{user.name}</span>
                   <AnimatePresence>
                     {profileOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 top-0 mt-12 bg-black border border-gray-800 w-48 shadow-lg z-50 rounded-lg overflow-hidden"
-                      >
-                        <a
-                          href="/community"
-                          className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
-                        >
-                          Continue to Community
-                        </a>
-                        <a
-                          href="/profile"
-                          className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
-                        >
-                          My Profile
-                        </a>
-                        <button
-                          onClick={() => {
-                            logout();
-                            auth0logout({ returnTo: "/" });
-                          }}
-                          className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-800 hover:text-red-500 transition-colors duration-300"
-                        >
-                          Log Out
-                        </button>
-                      </motion.div>
-                    )}
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    className="absolute right-0 top-0 mt-12 bg-black border border-gray-800 w-48 shadow-lg z-50 rounded-lg overflow-hidden"
+  >
+    {!isCommunityPage && (
+      <a
+        href="/community"
+        className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
+      >
+        Continue to Community
+      </a>
+    )}
+    <a
+      href="/profile"
+      className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors duration-300"
+    >
+      My Profile
+    </a>
+    <button
+      onClick={() => {
+        logout();
+        auth0logout({ returnTo: "/" });
+      }}
+      className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-800 hover:text-red-500 transition-colors duration-300"
+    >
+      Log Out
+    </button>
+  </motion.div>
+)}
+
                   </AnimatePresence>
                 </div>
               ) : (
@@ -504,6 +508,90 @@ const Navigation = () => {
 
             {/* Mobile Menu Toggle */}
             <div className="lg:hidden">
+              {menuOpen && (
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    className="absolute top-16 right-4 w-56 bg-black border border-gray-800 rounded-lg shadow-lg z-50 overflow-hidden"
+  >
+    {user ? (
+      <>
+        {!isCommunityPage && (
+          <a
+            href="/community"
+            className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            Continue to Community
+          </a>
+        )}
+        <a
+          href="/profile"
+          className="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors"
+          onClick={() => setMenuOpen(false)}
+        >
+          My Profile
+        </a>
+
+        <button
+          onClick={() => {
+            setMenuOpen(false);
+            navigate("/community/ask-the-community");
+          }}
+          className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors"
+        >
+          Ask the Community
+        </button>
+
+        <button
+          onClick={() => {
+            setMenuOpen(false);
+            navigate("/community/announcements");
+          }}
+          className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors"
+        >
+          Announcements
+        </button>
+
+        <button
+          onClick={() => {
+            setMenuOpen(false);
+            // Optionally, you can add notification state toggle logic here or navigate somewhere
+            navigate("/community/notifications"); // if you have a notifications page
+            // else implement whatever logic to open notifications
+          }}
+          className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-primary-green transition-colors"
+        >
+          Notifications
+          {hasUnseen && <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+        </button>
+
+        <button
+          onClick={() => {
+            logout();
+            auth0logout({ returnTo: "/" });
+            setMenuOpen(false);
+          }}
+          className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-800 hover:text-red-500 transition-colors"
+        >
+          Log Out
+        </button>
+      </>
+    ) : (
+      <button
+        onClick={() => {
+          loginWithPopup();
+          setMenuOpen(false);
+        }}
+        className="block w-full text-left px-4 py-2 text-primary-green hover:bg-gray-800 transition-colors"
+      >
+        Community Sign In / Up
+      </button>
+    )}
+  </motion.div>
+)}
+
               {menuOpen ? (
                 <X
                   className="w-6 h-6 text-white cursor-pointer"
