@@ -13,6 +13,7 @@ import {
   HUMAN_RESOURCES_INDIA_SHEET_ID,
   ANALYTICS_INDIA_SHEET_ID,
   STRATEGY_INDIA_SHEET_ID,
+
   FRESHERS_INDIA_SHEET_ID,
 
   OPERATIONS_US_SHEET_ID,
@@ -184,6 +185,12 @@ export async function generatePostsAll() {
       const title = 'Job Referral Opportunity';
       const job_description = row['About the Job'] || row['Job Description'] || '';
       const salaryRange = row['Salary Range'] ? row['Salary Range'].trim() : '';
+
+  const salaryMinRaw = row['Salary Min'] || row['salary min'];
+  const salaryMaxRaw = row['Salary Max'] || row['salary max'];
+  const salaryMin = salaryMinRaw ? Number(salaryMinRaw) : null;
+  const salaryMax = salaryMaxRaw ? Number(salaryMaxRaw) : null;
+
       const jobTitle = row['Job Title']?.trim() || null;
       const yearsOfExpRaw = row['Years of experience'];
       const yearsOfExp = (
@@ -245,8 +252,8 @@ export async function generatePostsAll() {
         if (!jt) {
           const jobTitle = (row['Job Title'] || '').toLowerCase();
           if (jobTitle.includes('intern')) return 'internship';
-          if (jobTitle.includes('contract')) return 'contract';
-          if (jobTitle.includes('freelance')) return 'freelance';
+          // if (jobTitle.includes('contract')) return 'contract';
+          // if (jobTitle.includes('freelance')) return 'freelance';
           if (jobTitle.includes('part-time')) return 'part-time';
           return 'full-time';
         }
@@ -277,6 +284,8 @@ export async function generatePostsAll() {
         location,
         companyName,
         salary,
+        salaryMin,
+        salaryMax,
         jobType,
         experienceLevel,
         jobTitle,
@@ -300,7 +309,7 @@ export async function generatePostsAll() {
 }
 
 // To run the import: uncomment below
-//generatePostsAll();
+// generatePostsAll();
 
 
 /*

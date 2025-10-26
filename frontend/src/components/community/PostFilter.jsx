@@ -1,25 +1,35 @@
 import React from "react";
 import * as FiIcons from "react-icons/fi";
-const { FiSearch } = FiIcons;
+import { useAuthStore } from "../../store/authStore";
+const { FiSearch, FiDownload } = FiIcons;
 
-const experienceLevels = ["intern", "entry", "mid", "senior"];
+const experienceLevels = [
+  { value: "intern", label: "Intern" },
+  { value: "entry", label: "Freshers" },
+  { value: "mid", label: "Mid" },
+  { value: "senior", label: "Senior" }
+];
 const jobTypes = [
-  "full-time",
-  "part-time",
-  "internship",
+  { value: "full-time", label: "Full-time" },
+  { value: "part-time", label: "Part-time" },
+  { value: "internship", label: "Internship" }
 ];
 const salaryRanges = [
-  { label: "₹0–₹5L", min: 0, max: 500000 },
-  { label: "₹5L–₹10L", min: 500000, max: 1000000 },
-  { label: "₹10L–₹20L", min: 1000000, max: 2000000 },
-  { label: "₹20L+", min: 2000000, max: null },
+  { label: "₹0–₹4L", min: 0, max: 400000 },
+  { label: "₹4L–₹10L", min: 400000, max: 1000000 },
+  { label: "₹10L+", min: 1000000, max: null }
 ];
+
+const API_BASE_URL = import.meta.env.VITE_API_PORT;
 
 export default function PostFilter({
   selectedFilters,
   setSelectedFilters,
   onSearch,
 }) {
+  // Get the user role from auth store
+  const role = useAuthStore((state) => state.role);
+
   function handleChange(e) {
     setSelectedFilters((prev) => ({
       ...prev,
@@ -36,6 +46,71 @@ export default function PostFilter({
     onSearch();
   }
 
+  function stripHTML(html) {
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
+
+  async function handleDownload() {
+    try {
+      const params = new URLSearchParams();
+      if (selectedFilters.salaryRange)
+        params.append("salaryLabel", selectedFilters.salaryRange);
+
+      // You can append other filters here similarly if needed
+
+      const resp = await fetch(`${API_BASE_URL}/api/posts?${params.toString()}`);
+      const payload = await resp.json();
+      if (!payload.posts) return;
+
+      const csvHeaders = [
+        "Company Name",
+        "Location",
+        "Salary Min",
+        "Salary Max",
+        "Job Type",
+        "Experience Level",
+        "Job Title",
+        "Job Description"
+      ];
+
+      const csvRows = [
+        csvHeaders.join(","),
+        ...payload.posts.map(post =>
+          [
+            `"${post.companyName || ""}"`,
+            `"${post.location || ""}"`,
+            post.salaryMin || "",
+            post.salaryMax || "",
+            `"${post.jobType || ""}"`,
+            `"${post.experienceLevel || ""}"`,
+            `"${post.jobTitle || ""}"`,
+            `"${stripHTML(post.content || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`
+          ].join(",")
+        )
+      ];
+
+      const csvContent = csvRows.join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "filtered_posts.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Download failed");
+      console.error(err);
+    }
+  }
+
   return (
     <form
       className="flex flex-wrap md:flex-nowrap items-center gap-2 p-2 bg-zinc-900 rounded-xl shadow"
@@ -45,7 +120,7 @@ export default function PostFilter({
         name="keyword"
         value={selectedFilters.keyword || ""}
         onChange={handleChange}
-        placeholder="Job Title / Keyword"
+        placeholder="Keyword"
         className="flex-1 min-w-[110px] px-2 py-2 rounded-xl bg-gray-800 text-gray-300 border border-gray-700 focus:ring-[#79e708]"
       />
       <input
@@ -64,9 +139,9 @@ export default function PostFilter({
         <option className="text-gray-300 bg-gray-800" value="">
           Experience Level
         </option>
-        {experienceLevels.map((lvl) => (
-          <option key={lvl} value={lvl} className="text-gray-300 bg-gray-800">
-            {lvl}
+        {experienceLevels.map(lvl => (
+          <option key={lvl.value} value={lvl.value} className="text-gray-300 bg-gray-800">
+            {lvl.label}
           </option>
         ))}
       </select>
@@ -79,9 +154,9 @@ export default function PostFilter({
         <option className="text-gray-300 bg-gray-800" value="">
           Job Type
         </option>
-        {jobTypes.map((type) => (
-          <option key={type} value={type} className="text-gray-300 bg-gray-800">
-            {type}
+        {jobTypes.map(type => (
+          <option key={type.value} value={type.value} className="text-gray-300 bg-gray-800">
+            {type.label}
           </option>
         ))}
       </select>
@@ -92,25 +167,39 @@ export default function PostFilter({
         placeholder="Company Name"
         className="flex-1 min-w-[110px] px-2 py-2 rounded-xl bg-gray-800 text-gray-300 border border-gray-700 focus:ring-[#79e708]"
       />
-      <select
-        name="salaryRange"
-        value={selectedFilters.salaryRange || ""}
-        onChange={handleSalaryChange}
-        className="min-w-[100px] px-2 py-2 rounded-xl bg-gray-800 text-gray-300 border border-gray-700 focus:ring-[#79e708]"
-      >
-        <option className="text-gray-300 bg-gray-800" value="">
-          Salary Range
-        </option>
-        {salaryRanges.map((sr) => (
-          <option
-            key={sr.label}
-            value={sr.label}
-            className="text-gray-300 bg-gray-800"
-          >
-            {sr.label}
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <select
+          name="salaryRange"
+          value={selectedFilters.salaryRange || ""}
+          onChange={handleSalaryChange}
+          className="min-w-[100px] px-2 py-2 rounded-xl bg-gray-800 text-gray-300 border border-gray-700 focus:ring-[#79e708]"
+        >
+          <option className="text-gray-300 bg-gray-800" value="">
+            Salary Range
           </option>
-        ))}
-      </select>
+          {salaryRanges.map((sr) => (
+            <option
+              key={sr.label}
+              value={sr.label}
+              className="text-gray-300 bg-gray-800"
+            >
+              {sr.label}
+            </option>
+          ))}
+        </select>
+        {role === "tpo" && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="ml-2 px-2 py-2 rounded-xl flex items-center justify-center border border-[#4d6a4d] bg-[#2c3c2d] hover:bg-[#3b5c41] text-[#c5f07a] shadow"
+            title="Download matching posts"
+            aria-label="Download matching posts"
+            style={{ minWidth: 0 }}
+          >
+            <FiDownload className="w-5 h-5" />
+          </button>
+        )}
+      </div>
       <button
         type="submit"
         className="

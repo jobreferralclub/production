@@ -13,7 +13,6 @@ import ProductsDropdown from "./ProductsDropdown";
 const { FiMenu, FiSearch, FiHelpCircle, FiBookOpen, FiBell } = FiIcons;
 
 const Navigation = () => {
-  
   const { user, logout } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
